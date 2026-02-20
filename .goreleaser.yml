@@ -64,7 +64,7 @@ brews:
       owner: l2D
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-      directory: Formula
+    directory: Formula
     homepage: https://github.com/l2D/claude-code-command-fix
     description: Fix formatting issues in terminal commands copied from Claude Code
     license: MIT
