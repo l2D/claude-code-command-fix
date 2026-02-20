@@ -1,0 +1,92 @@
+version: 2
+
+builds:
+  - id: claude-fix
+    main: ./cmd/claude-fix/
+    binary: claude-fix
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X '{{ .ModulePath }}/internal/version.Version={{ .Version }}'
+      - -X '{{ .ModulePath }}/internal/version.CommitSHA={{ .ShortCommit }}'
+      - -X '{{ .ModulePath }}/internal/version.BuildTime={{ .Date }}'
+
+  - id: claude-command-fix
+    main: ./cmd/claude-command-fix/
+    binary: claude-command-fix
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X '{{ .ModulePath }}/internal/version.Version={{ .Version }}'
+      - -X '{{ .ModulePath }}/internal/version.CommitSHA={{ .ShortCommit }}'
+      - -X '{{ .ModulePath }}/internal/version.BuildTime={{ .Date }}'
+
+archives:
+  - id: claude-fix
+    builds:
+      - claude-fix
+      - claude-command-fix
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - LICENSE
+      - README.md
+
+brews:
+  - name: claude-code-command-fix
+    repository:
+      owner: l2D
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/l2D/claude-code-command-fix
+    description: Fix formatting issues in terminal commands copied from Claude Code
+    license: MIT
+    install: |
+      bin.install "claude-fix"
+      bin.install "claude-command-fix"
+    test: |
+      assert_match version.to_s, shell_output("#{bin}/claude-fix --version")
+
+changelog:
+  use: github
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 0
+    - title: Bug Fixes
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 1
+    - title: Performance
+      regexp: '^.*?perf(\(.+\))??!?:.+$'
+      order: 2
+    - title: Documentation
+      regexp: '^.*?docs(\(.+\))??!?:.+$'
+      order: 3
+    - title: Others
+      order: 999

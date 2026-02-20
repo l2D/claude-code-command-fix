@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Dry run (snapshot, no publish)
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Determine GoReleaser args
+        id: args
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN}" = "true" ]; then
+            echo "goreleaser_args=release --snapshot --skip=publish --clean" >> "${GITHUB_OUTPUT}"
+          else
+            echo "goreleaser_args=release" >> "${GITHUB_OUTPUT}"
+          fi
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: ${{ steps.args.outputs.goreleaser_args }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
