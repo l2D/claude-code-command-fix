@@ -43,6 +43,21 @@ func TestFormatCommand(t *testing.T) {
 			in:   "command1     arg1    arg2        arg3",
 			want: "command1 arg1 arg2 arg3",
 		},
+		{
+			name: "backslash line continuation preserved",
+			in:   "docker run \\\n  --name myapp \\\n  -p 8080:80 \\\n  -v /data:/data \\\n  nginx:latest",
+			want: "docker run \\\n  --name myapp \\\n  -p 8080:80 \\\n  -v /data:/data \\\n  nginx:latest",
+		},
+		{
+			name: "backslash with messy indentation cleaned up",
+			in:   "docker run \\\n      --name myapp \\\n  -p 8080:80 \\\n          -v /data:/data \\\n    nginx:latest",
+			want: "docker run \\\n  --name myapp \\\n  -p 8080:80 \\\n  -v /data:/data \\\n  nginx:latest",
+		},
+		{
+			name: "no backslash continuations collapses to single line",
+			in:   "docker run\n  --name myapp\n  -p 8080:80",
+			want: "docker run --name myapp -p 8080:80",
+		},
 	}
 
 	for _, tt := range tests {
