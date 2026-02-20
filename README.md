@@ -67,19 +67,22 @@ Binaries are output to `bin/claude-fix` and `bin/claude-command-fix`.
 
 ## Usage
 
-### Command Line
+```
+Usage: claude-fix [OPTIONS] [COMMAND...]
 
-**Short command:**
+Options:
+  -s, --single-line  Collapse backslash line continuations into a single line
+  -h, --help         Show this help message
+      --version      Show version information
+```
+
+### Command Line
 
 ```bash
 claude-fix "your broken command here"
 ```
 
-**Alternative command:**
-
-```bash
-claude-command-fix "your broken command here"
-```
+Also available as `claude-command-fix`, `cc-fix`, or `ccfix`.
 
 ### Interactive Mode
 
@@ -89,7 +92,52 @@ claude-fix
 
 Then paste your broken command and press Enter twice.
 
-### Example
+### Multi-line Commands
+
+Commands with `\` line continuations are auto-detected and preserved with consistent indentation:
+
+```bash
+claude-fix "docker run \
+      --name myapp \
+  -p 8080:80 \
+          -v /data:/data \
+    nginx:latest"
+```
+
+**Output:**
+
+```
+════════════════════════════════════════════════════════════
+docker run \
+  --name myapp \
+  -p 8080:80 \
+  -v /data:/data \
+  nginx:latest
+════════════════════════════════════════════════════════════
+Copied to clipboard!
+```
+
+Use `-s` to collapse into a single line instead:
+
+```bash
+claude-fix -s "docker run \
+  --name myapp \
+  -p 8080:80 \
+  nginx:latest"
+```
+
+**Output:**
+
+```
+════════════════════════════════════════════════════════════
+docker run --name myapp -p 8080:80 nginx:latest
+════════════════════════════════════════════════════════════
+Copied to clipboard!
+```
+
+### Single-line Commands
+
+Commands without `\` continuations are always collapsed to a single line:
 
 ```bash
 claude-fix "sudo launchctl unload
@@ -104,9 +152,6 @@ claude-fix "sudo launchctl unload
 sudo launchctl unload /System/Library/LaunchDaemons/com.apple.backupd-auto.plist && sudo launchctl load /System/Library/LaunchDaemons/com.apple.backupd-auto.plist
 ════════════════════════════════════════════════════════════
 Copied to clipboard!
-
-TEMPORARY FIX: This tool addresses Claude Code issue #4686
-https://github.com/anthropics/claude-code/issues/4686
 ```
 
 ## What It Fixes
@@ -114,6 +159,7 @@ https://github.com/anthropics/claude-code/issues/4686
 - Removes unwanted line breaks
 - Fixes extra whitespace and indentation
 - Preserves proper operator spacing (`&&`, `|`, `;`)
+- Auto-detects and preserves `\` line continuations with consistent indentation
 - Copies corrected command to clipboard automatically
 - Works on macOS (`pbcopy`), Linux (`xclip` / `wl-copy`), and Windows (`clip.exe`)
 
