@@ -4,9 +4,10 @@ import "testing"
 
 func TestFormatCommand(t *testing.T) {
 	tests := []struct {
-		name string
-		in   string
-		want string
+		name       string
+		in         string
+		singleLine bool
+		want       string
 	}{
 		{
 			name: "basic formatting with pipe",
@@ -58,13 +59,19 @@ func TestFormatCommand(t *testing.T) {
 			in:   "docker run\n  --name myapp\n  -p 8080:80",
 			want: "docker run --name myapp -p 8080:80",
 		},
+		{
+			name:       "single-line flag forces collapse of backslash continuations",
+			in:         "docker run \\\n  --name myapp \\\n  -p 8080:80 \\\n  nginx:latest",
+			singleLine: true,
+			want:       "docker run --name myapp -p 8080:80 nginx:latest",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := FormatCommand(tt.in)
+			got := FormatCommand(tt.in, tt.singleLine)
 			if got != tt.want {
-				t.Errorf("FormatCommand(%q) = %q, want %q", tt.in, got, tt.want)
+				t.Errorf("FormatCommand(%q, %v) = %q, want %q", tt.in, tt.singleLine, got, tt.want)
 			}
 		})
 	}

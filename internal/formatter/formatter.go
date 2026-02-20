@@ -17,16 +17,17 @@ var (
 // and normalizing operator spacing for &&, |, and ;.
 // If the input contains backslash line continuations, they are
 // preserved with consistent indentation.
-func FormatCommand(commandText string) string {
+func FormatCommand(commandText string, singleLine bool) string {
 	text := strings.TrimSpace(commandText)
 	if text == "" {
 		return ""
 	}
 
-	if lineContinuationRe.MatchString(text) {
+	if !singleLine && lineContinuationRe.MatchString(text) {
 		return formatMultiLine(text)
 	}
 
+	text = lineContinuationRe.ReplaceAllString(text, " ")
 	return formatSingleLine(text)
 }
 

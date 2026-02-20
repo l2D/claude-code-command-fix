@@ -20,8 +20,8 @@ type ClipboardFunc func(string) error
 // formatAndDisplay formats the input, prints the result, and copies to clipboard.
 //
 //nolint:errcheck // fmt writes to stdout/buffer; errors are not actionable in a CLI
-func formatAndDisplay(w io.Writer, input string, clipFn ClipboardFunc) {
-	formatted := formatter.FormatCommand(input)
+func formatAndDisplay(w io.Writer, input string, singleLine bool, clipFn ClipboardFunc) {
+	formatted := formatter.FormatCommand(input, singleLine)
 	if formatted == "" {
 		fmt.Fprintln(w, "No command text provided.")
 		return
@@ -46,7 +46,7 @@ func formatAndDisplay(w io.Writer, input string, clipFn ClipboardFunc) {
 // interactiveMode reads multi-line input until an empty line is entered.
 //
 //nolint:errcheck // fmt writes to stdout/buffer; errors are not actionable in a CLI
-func interactiveMode(r io.Reader, w io.Writer, clipFn ClipboardFunc) {
+func interactiveMode(r io.Reader, w io.Writer, singleLine bool, clipFn ClipboardFunc) {
 	fmt.Fprintln(w, "Paste the command below (press Enter twice to process):")
 	fmt.Fprintln(w)
 
@@ -62,24 +62,50 @@ func interactiveMode(r io.Reader, w io.Writer, clipFn ClipboardFunc) {
 	}
 
 	input := strings.Join(lines, "\n")
-	formatAndDisplay(w, input, clipFn)
+	formatAndDisplay(w, input, singleLine, clipFn)
 }
 
 // Run is the main entry point for the CLI.
 func Run() {
 	args := os.Args[1:]
 
-	if len(args) == 1 && args[0] == "--version" {
-		fmt.Printf("claude-code-command-fix %s (commit: %s, built: %s)\n",
-			version.Version, version.CommitSHA, version.BuildTime)
+	var singleLine bool
+	var remaining []string
+
+	for _, arg := range args {
+		switch arg {
+		case "--help", "-h":
+			printUsage(os.Stdout)
+			return
+		case "--version":
+			fmt.Printf("claude-code-command-fix %s (commit: %s, built: %s)\n",
+				version.Version, version.CommitSHA, version.BuildTime)
+			return
+		case "--single-line", "-s":
+			singleLine = true
+		default:
+			remaining = append(remaining, arg)
+		}
+	}
+
+	if len(remaining) > 0 {
+		input := strings.Join(remaining, " ")
+		formatAndDisplay(os.Stdout, input, singleLine, clipboard.Copy)
 		return
 	}
 
-	if len(args) > 0 {
-		input := strings.Join(args, " ")
-		formatAndDisplay(os.Stdout, input, clipboard.Copy)
-		return
-	}
+	interactiveMode(os.Stdin, os.Stdout, singleLine, clipboard.Copy)
+}
 
-	interactiveMode(os.Stdin, os.Stdout, clipboard.Copy)
+//nolint:errcheck // fmt writes to stdout; errors are not actionable in a CLI
+func printUsage(w io.Writer) {
+	fmt.Fprintln(w, "Usage: claude-fix [OPTIONS] [COMMAND...]")
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Fix formatting issues in terminal commands copied from Claude Code.")
+	fmt.Fprintln(w, "If no arguments are given, starts interactive mode (paste, then press Enter twice).")
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Options:")
+	fmt.Fprintln(w, "  -s, --single-line  Collapse backslash line continuations into a single line")
+	fmt.Fprintln(w, "  -h, --help         Show this help message")
+	fmt.Fprintln(w, "      --version      Show version information")
 }

@@ -52,7 +52,7 @@ func TestFormatAndDisplay(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			formatAndDisplay(&buf, tt.input, tt.clipFn)
+			formatAndDisplay(&buf, tt.input, false, tt.clipFn)
 			got := buf.String()
 
 			for _, want := range tt.wantSubstr {
@@ -68,7 +68,7 @@ func TestInteractiveMode(t *testing.T) {
 	input := "command1   &&    command2\n\n"
 	var buf bytes.Buffer
 
-	interactiveMode(strings.NewReader(input), &buf, mockClipboardOK)
+	interactiveMode(strings.NewReader(input), &buf, false, mockClipboardOK)
 	got := buf.String()
 
 	if !strings.Contains(got, "command1 && command2") {
