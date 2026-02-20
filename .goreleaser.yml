@@ -70,6 +70,8 @@ brews:
     install: |
       bin.install "claude-fix"
       bin.install "claude-command-fix"
+      (bin/"cc-fix").make_symlink("claude-fix")
+      (bin/"ccfix").make_symlink("claude-fix")
     test: |
       assert_match version.to_s, shell_output("#{bin}/claude-fix --version")
 
