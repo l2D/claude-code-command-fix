@@ -41,7 +41,7 @@ jobs:
             echo "goreleaser_args=release" >> "${GITHUB_OUTPUT}"
           fi
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           version: "~> v2"
           args: ${{ steps.args.outputs.goreleaser_args }}
